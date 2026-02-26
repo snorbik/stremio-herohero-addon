@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: stremio-herohero-addon
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: ADDON_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
