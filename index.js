@@ -282,6 +282,7 @@ td input{padding:.4rem .65rem;font-size:.8rem}
 <div class="card">
   <h2>Přihlašovací údaje</h2>
   <label><span>Refresh Token</span><input type="password" id="rt" placeholder="eyJ…"><p class="hint">Cookie „refreshToken2" z DevTools → Application → Cookies → herohero.co (platí 30 dní)</p></label>
+  <p class="hint" style="color:#3a3a3a;margin-bottom:.8rem">Token prochází tímto serverem. Pokud mu nedůvěřuješ, spusť si <a href="https://github.com/snorbik/stremio-herohero-addon" target="_blank" rel="noopener" style="color:#555">vlastní instanci</a>.</p>
   <button class="btn btn-primary" id="fetchBtn">Načíst má předplatná</button>
   <p id="st" class="status"></p>
 </div>

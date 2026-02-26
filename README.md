@@ -54,6 +54,16 @@ Najdeš ji v e-mailu od HeroHero po aktivaci předplatného, nebo v nastavení s
 
 ---
 
+## Soukromí a bezpečnost
+
+Addon funguje jako prostředník mezi Stremiem a HeroHero API. Aby mohl přehrávat obsah, **Refresh Token a RSS URL procházejí serverem** při každém requestu — provozovatel serveru k nim tedy technicky přístup má.
+
+Pokud ti to vadí, máš dvě možnosti:
+- **Zkontroluj zdrojový kód** — addon je open source, kód je k dispozici zde na GitHubu
+- **Spusť si vlastní instanci** — naklonuj repozitář a nasaď na svůj vlastní server (viz [README sekce o nasazení](#nasazení-na-server-render--zdarma))
+
+---
+
 ## Disclaimer
 
 Neoficiální projekt, není spojen s HeroHero. Slouží výhradně pro přehrávání obsahu, ke kterému má uživatel legitimní přístup prostřednictvím aktivního předplatného.
