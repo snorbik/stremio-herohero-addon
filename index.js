@@ -240,10 +240,10 @@ function sanitizeFilename(name) {
 // ---------------------------------------------------------------------------
 // Konfigurační stránka (HTML)
 // ---------------------------------------------------------------------------
-function getConfigurePage(baseUrl) {
+function getConfigurePage() {
     return `<!DOCTYPE html><html lang="cs"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>HeroHero – Konfigurace</title><style>
+<title>HeroHero addon for Stremio</title><style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:#0f0f0f;color:#e5e5e5;padding:1.5rem 1rem}
 .w{max-width:780px;margin:0 auto}
@@ -259,6 +259,12 @@ input:focus{outline:none;border-color:#7c3aed}
 .btn-primary{background:#7c3aed;color:#fff}.btn-primary:hover{background:#6d28d9}
 .btn-sm{padding:.38rem .85rem;font-size:.8rem}
 .btn-green{background:#059669;color:#fff}.btn-green:hover{background:#047857}
+.subtitle{font-size:.9rem;color:#555;margin-top:.3rem;margin-bottom:1.8rem}
+.btn-gh{background:#21262d;color:#e6edf3;border:1px solid #30363d;gap:.4rem}.btn-gh:hover{background:#30363d}
+.btn-gh svg{width:16px;height:16px;fill:currentColor;flex-shrink:0}
+.btn-bmc{background:transparent;color:#666;border:1px solid #252525;gap:.4rem}.btn-bmc:hover{background:#1a1a1a;color:#999}
+.footer{display:flex;align-items:center;justify-content:center;gap:.6rem;max-width:780px;margin:2rem auto 1.5rem;padding-top:1.2rem;border-top:1px solid #1e1e1e}
+.footer .btn{height:2.2rem;padding:.45rem 1rem}
 .status{font-size:.82rem;margin-top:.6rem;min-height:1.2em}
 .err{color:#f87171}.ok{color:#6ee7b7}
 table{width:100%;border-collapse:collapse;margin-top:.3rem}
@@ -271,11 +277,12 @@ td input{padding:.4rem .65rem;font-size:.8rem}
 .res-box input{flex:1;font-size:.76rem;color:#777}
 #subs-card{display:none}
 </style></head><body><div class="w">
-<h1>HeroHero – Konfigurace</h1>
+<h1>HeroHero addon for Stremio</h1>
+<p class="subtitle">Přehrávej videa a podcasty z HeroHero přímo ve Stremiu – bez otevírání prohlížeče.</p>
 <div class="card">
   <h2>Přihlašovací údaje</h2>
   <label><span>Refresh Token</span><input type="password" id="rt" placeholder="eyJ…"><p class="hint">Cookie „refreshToken2" z DevTools → Application → Cookies → herohero.co (platí 30 dní)</p></label>
-  <button class="btn btn-primary" id="fetchBtn">Načíst předplatné</button>
+  <button class="btn btn-primary" id="fetchBtn">Načíst má předplatná</button>
   <p id="st" class="status"></p>
 </div>
 <div class="card" id="subs-card">
@@ -284,7 +291,7 @@ td input{padding:.4rem .65rem;font-size:.8rem}
   <tbody id="sb"></tbody></table>
 </div>
 </div><script>
-const BASE='${baseUrl}',LS='hh_cfg'
+const BASE=window.location.origin,LS='hh_cfg'
 function gs(){try{return JSON.parse(localStorage.getItem(LS)||'{}')}catch{return{}}}
 function ss(k,v){try{const s=gs();s[k]=v;localStorage.setItem(LS,JSON.stringify(s))}catch(e){}}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
@@ -302,7 +309,7 @@ async function fetchSubs(){
   const rt=document.getElementById('rt').value.trim()
   if(!rt){st('Vyplň Refresh Token.','err');return}
   ss('rt',rt)
-  btn.disabled=true;btn.textContent='Načítám…'
+  btn.disabled=true;btn.textContent='Načítám\u2026'
   st('')
   try{
     const r=await fetch(BASE+'/api/subscriptions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({refreshToken:rt})})
@@ -313,7 +320,7 @@ async function fetchSubs(){
     renderSubs(d.subscriptions)
     st(d.subscriptions.length+' předplatných načteno.','ok')
   }catch(e){st('Chyba: '+e.message,'err')}
-  finally{btn.disabled=false;btn.textContent='Načíst předplatné'}
+  finally{btn.disabled=false;btn.textContent='Načíst má předplatná'}
 }
 document.getElementById('fetchBtn').addEventListener('click',fetchSubs)
 
@@ -357,7 +364,22 @@ function install(id,name){
   rr.style.display=''
   rr.scrollIntoView({behavior:'smooth',block:'nearest'})
 }
-</script></body></html>`
+fetch('https://api.github.com/repos/snorbik/stremio-herohero-addon').then(r=>r.json()).then(d=>{if(d.stargazers_count!=null)document.getElementById('gh-stars').textContent='★ '+d.stargazers_count+' Star'}).catch(()=>{})
+</script>
+<div class="footer">
+  <a class="btn btn-gh" href="https://github.com/snorbik/stremio-herohero-addon" target="_blank" rel="noopener">
+    <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+    GitHub
+  </a>
+  <a class="btn btn-gh" id="gh-stars" href="https://github.com/snorbik/stremio-herohero-addon/stargazers" target="_blank" rel="noopener">
+    <svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg>
+    Star on GitHub
+  </a>
+  <a class="btn btn-bmc" href="https://buymeacoffee.com/snorbik" target="_blank" rel="noopener">
+    ☕ Buy me a coffee
+  </a>
+</div>
+</body></html>`
 }
 
 const PORT = process.env.PORT || 7070
@@ -378,7 +400,7 @@ app.get('/', (req, res) => res.redirect('/configure'))
 // Konfigurační stránka – /configure i /:config/configure (pro pre-fill z URL)
 app.get(['/configure', '/:config/configure'], (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8')
-    res.end(getConfigurePage(ADDON_URL))
+    res.end(getConfigurePage())
 })
 
 // API – seznam aktivních předplatných
