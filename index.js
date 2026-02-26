@@ -276,6 +276,7 @@ td input{padding:.4rem .65rem;font-size:.8rem}
 .res-box{display:flex;gap:.5rem;align-items:center}
 .res-box input{flex:1;font-size:.76rem;color:#777}
 #subs-card{display:none}
+<script data-goatcounter="https://snorbik.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </style></head><body><div class="w">
 <h1>HeroHero addon for Stremio</h1>
 <p class="subtitle">Přehrávej videa a podcasty z HeroHero přímo ve Stremiu – bez otevírání prohlížeče.</p>
