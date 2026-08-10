@@ -2,8 +2,14 @@ const { addonBuilder, getRouter } = require('stremio-addon-sdk')
 const express = require('express')
 const { fetchFeed } = require('./lib/rss')
 const { getPostAssets, getSubscriptions } = require('./lib/herohero')
+const { getMaster, buildVariantMaster, encodeStreamRef, decodeStreamRef } = require('./lib/hls')
 
 const ADDON_URL = (process.env.ADDON_URL || `http://localhost:${process.env.PORT || 7070}`).replace(/\/$/, '')
+
+// Streamy po kvalitách vedou zpátky na náš /hls endpoint, takže potřebují
+// veřejnou adresu. V produkci bez ADDON_URL by ukazovaly na localhost –
+// v tom případě raději nabídneme jen původní adaptivní master.
+const HLS_ENABLED = Boolean(process.env.ADDON_URL) || process.env.NODE_ENV !== 'production'
 
 const manifest = {
     id: 'community.herohero.rss',
@@ -168,12 +174,34 @@ builder.defineStreamHandler(async ({ type, id, config }) => {
             const assets = await getPostAssets(episodeGuid, accessToken || '', refreshToken)
             console.log(`[stream] GraphQL assets: ${assets.length}, hasVideo: ${assets.map(a => a.hasVideo).join(',')}`)
             for (const asset of assets) {
-                // Video HLS stream (master playlist)
+                // Video – jednotlivé kvality jako samostatné streamy.
+                // HeroHero master playlist není seřazený podle kvality, takže
+                // přehrávač při adaptivním výběru startuje na 360p. Nabídneme
+                // proto 1080p a spol. napřímo, seřazené od nejlepší.
                 if (asset.hasVideo && asset.videoStreamUrl) {
+                    let byQuality = 0
+                    if (HLS_ENABLED) {
+                        try {
+                            const master = await getMaster(asset.videoStreamUrl)
+                            for (const variant of master.variants) {
+                                streams.push({
+                                    url: `${ADDON_URL}/hls/${encodeStreamRef(asset.videoStreamUrl, variant.index)}.m3u8`,
+                                    name: variant.label,
+                                    description: `HLS • ${(variant.bandwidth / 1e6).toFixed(1)} Mbps`
+                                })
+                            }
+                            byQuality = master.variants.length
+                            console.log(`[stream] HLS kvality: ${master.variants.map(v => v.label).join(', ')}`)
+                        } catch (err) {
+                            console.error('[stream] HLS master chyba:', err.message)
+                        }
+                    }
+
+                    // Původní master jako záloha i jako volba pro adaptivní kvalitu
                     streams.push({
                         url: asset.videoStreamUrl,
-                        name: 'Video',
-                        description: 'HLS video stream'
+                        name: byQuality ? 'Auto' : 'Video',
+                        description: 'Adaptivní kvalita (ABR)'
                     })
                 }
                 // Audio MP3 jako záloha (vždy přítomný)
@@ -404,6 +432,21 @@ app.get('/', (req, res) => res.redirect('/configure'))
 app.get(['/configure', '/:config/configure'], (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8')
     res.end(getConfigurePage())
+})
+
+// HLS – master playlist s jedinou kvalitou. Neproxujeme video, jen pár set
+// bajtů textu; segmenty si přehrávač tahá přímo z CDN.
+app.get(/^\/hls\/(.+)\.m3u8$/, async (req, res) => {
+    try {
+        const { url, index } = decodeStreamRef(req.params[0])
+        const master = await getMaster(url)
+        res.setHeader('Content-Type', 'application/vnd.apple.mpegurl')
+        res.setHeader('Cache-Control', 'public, max-age=300')
+        res.end(buildVariantMaster(master, index))
+    } catch (err) {
+        console.error('[hls] chyba:', err.message)
+        res.status(404).end()
+    }
 })
 
 // API – seznam aktivních předplatných
