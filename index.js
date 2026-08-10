@@ -435,6 +435,12 @@ const server = app.listen(PORT, () => {
     console.log(`Manifest:     http://localhost:${PORT}/manifest.json`)
 })
 
+// První segment cesty je konfigurace (encodeURIComponent(JSON)) a obsahuje
+// refreshToken uživatele – do logů se nesmí dostat.
+function redactUrl(url) {
+    return url.replace(/^\/(?:%7B|\{)[^/]*/i, '/<config>')
+}
+
 server.on('request', (req) => {
-    console.log(`→ ${req.method} ${req.url}`)
+    console.log(`→ ${req.method} ${redactUrl(req.url)}`)
 })
